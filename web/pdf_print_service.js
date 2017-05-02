@@ -72,10 +72,11 @@
     });
   }
 
-  function PDFPrintService(pdfDocument, pagesOverview, printContainer) {
+  function PDFPrintService(pdfDocument, pagesOverview, printContainer, appConfig) {
     this.pdfDocument = pdfDocument;
     this.pagesOverview = pagesOverview;
     this.printContainer = printContainer;
+    this.appConfig = appConfig;
     this.currentPage = -1;
     // The temporary canvas where renderPage paints one page at a time.
     this.scratchCanvas = document.createElement('canvas');
@@ -146,11 +147,21 @@
         this.throwIfInactive();
         if (++this.currentPage >= pageCount) {
           renderProgress(pageCount, pageCount);
+
+          if (this.appConfig.onPrintProgress) {
+            this.appConfig.onPrintProgress(100);
+          }
+
           resolve();
           return;
         }
         var index = this.currentPage;
         renderProgress(index, pageCount);
+
+        if (this.appConfig.onPrintProgress) {
+          this.appConfig.onPrintProgress(Math.round(index / pageCount * 100));
+        }
+
         renderPage(this, this.pdfDocument, index + 1, this.pagesOverview[index])
           .then(this.useRenderedPage.bind(this))
           .then(function () {
@@ -336,12 +347,11 @@
   PDFPrintServiceFactory.instance = {
     supportsPrinting: true,
 
-    createPrintService: function (pdfDocument, pagesOverview, printContainer) {
+    createPrintService: function (pdfDocument, pagesOverview, printContainer, appConfig) {
       if (activeService) {
         throw new Error('The print service is created and active.');
       }
-      activeService = new PDFPrintService(pdfDocument, pagesOverview,
-                                          printContainer);
+      activeService = new PDFPrintService(pdfDocument, pagesOverview, printContainer, appConfig);
       return activeService;
     }
   };

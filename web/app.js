@@ -179,6 +179,7 @@ var PDFViewerApplication = {
   secondaryToolbar: null,
   /** @type {EventBus} */
   eventBus: null,
+  onProgress: null,
   pageRotation: 0,
   isInitialViewSet: false,
   viewerPrefs: {
@@ -877,6 +878,10 @@ var PDFViewerApplication = {
     if (percent > this.loadingBar.percent || isNaN(percent)) {
       this.loadingBar.percent = percent;
 
+      if (this.appConfig.onProgress) {
+        this.appConfig.onProgress(percent);
+      }
+
       // When disableAutoFetch is enabled, it's not uncommon for the entire file
       // to never be fetched (depends on e.g. the file structure). In this case
       // the loading bar will not be completely filled, nor will it be hidden.
@@ -1223,8 +1228,8 @@ var PDFViewerApplication = {
 
     var pagesOverview = this.pdfViewer.getPagesOverview();
     var printContainer = this.appConfig.printContainer;
-    var printService = PDFPrintServiceFactory.instance.createPrintService(
-      this.pdfDocument, pagesOverview, printContainer);
+    var printService = PDFPrintServiceFactory.instance.createPrintService(this.pdfDocument, pagesOverview, printContainer, this.appConfig);
+    
     this.printService = printService;
     this.forceRendering();
 
@@ -1252,6 +1257,8 @@ var PDFViewerApplication = {
   },
 
   afterPrint: function pdfViewSetupAfterPrint() {
+    this.appConfig.onPrintFinished();
+
     if (this.printService) {
       this.printService.destroy();
       this.printService = null;
