@@ -40,7 +40,25 @@ var RendererType = {
   SVG: 'svg',
 };
 
-var mozL10n = document.mozL10n || document.webL10n;
+var mozL10n = {
+  getReadyState: function getNotLoadingState() {
+    return 'not_loading';
+  },
+  get: function getFakeTranslation(key, values, template) {
+    if (values && template) {
+      for(var key in values) {
+        template = template.replace('{{' + key + '}}', values[key]);
+      }
+    }
+
+    return template;
+  },
+  getDirection: function hardcoreLtrDirection() {
+    return 'ltr';
+  },
+  setLanguage: function doNothing() {},
+  translate: function noNothing() {}
+};
 
 var PDFJS = pdfjsLib.PDFJS;
 

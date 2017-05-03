@@ -66,13 +66,81 @@ See https://github.com/adobe-type-tools/cmap-resources
 <!--#else-->
 <!--#include viewer-snippet-minified.html-->
 <!--#endif-->
+    <script type="text/javascript">
+      var origin = window.location.origin || (window.location.protocol + "//" + window.location.hostname + (window.location.port ? ':' + window.location.port : ''));
 
+      var eventBus;
+
+      function receiveMessage(event) {
+        //do not check origin as we does not care about security here
+        if (event.data.type === 'VIEWER_INITIALIZE') {
+          var webViewerParams = {
+            defaultUrl: event.data.url,
+            onProgress: function (progress) {
+              window.parent.postMessage({ type: 'DOCUMENT_PROGRESS', progress: progress }, origin);
+            },
+            onPrintFinished: function() {
+              window.parent.postMessage({ type: 'DOCUMENT_PRINT_FINISHED' }, origin);
+            },
+            onPrintProgress: function (progress) {
+              window.parent.postMessage({ type: 'DOCUMENT_PRINT_PROGRESS', progress: progress }, origin);
+            }
+          }
+
+          eventBus = webViewerLoad(webViewerParams);
+          if (eventBus instanceof Promise) {
+            eventBus.then(function (reference) {
+              eventBus = reference;
+            });
+          } else {
+            eventBus = eventBus;
+          }
+        }
+
+        if (event.data.type === 'DOCUMENT_PRINT') {
+          eventBus.dispatch('print');
+        }
+
+        if (event.data.type === 'DOCUMENT_ZOOMIN') {
+          eventBus.dispatch('zoomin');
+        }
+
+        if (event.data.type === 'DOCUMENT_ZOOMOUT') {
+          eventBus.dispatch('zoomout');
+        }
+
+        if (event.data.type === 'DOCUMENT_SCALE_CHANGED') {
+          eventBus.dispatch('scalechanged', {
+            value: event.data.scale
+          });
+        }
+
+        if (event.data.type === 'DOCUMENT_PRINT_CANCEL') {
+          document.getElementById('printCancel').click();
+        }
+      }
+
+      window.addEventListener('message', receiveMessage, false);
+    </script>
+    <style>
+      body {
+        background: transparent;
+      }
+
+      #viewerContainer {
+        top: 0 !important;
+      }
+
+      #mainContainer {
+        left: 0px !important;
+      }
+    </style>
   </head>
 
   <body tabindex="1" class="loadingInProgress">
     <div id="outerContainer">
 
-      <div id="sidebarContainer">
+      <div id="sidebarContainer" style="display: none;">
         <div id="toolbarSidebar">
           <div class="splitToolbarButton toggled">
             <button id="viewThumbnail" class="toolbarButton toggled" title="Show Thumbnails" tabindex="2" data-l10n-id="thumbs">
@@ -97,7 +165,7 @@ See https://github.com/adobe-type-tools/cmap-resources
       </div>  <!-- sidebarContainer -->
 
       <div id="mainContainer">
-        <div class="findbar hidden doorHanger" id="findbar">
+        <div class="findbar hidden doorHanger" id="findbar" style="display: none;">
           <div id="findbarInputContainer">
             <input id="findInput" class="toolbarField" title="Find" placeholder="Find in document…" tabindex="91" data-l10n-id="find_input">
             <div class="splitToolbarButton">
@@ -124,7 +192,7 @@ See https://github.com/adobe-type-tools/cmap-resources
           </div>
         </div>  <!-- findbar -->
 
-        <div id="secondaryToolbar" class="secondaryToolbar hidden doorHangerRight">
+        <div id="secondaryToolbar" class="secondaryToolbar hidden doorHangerRight" style="display: none;">
           <div id="secondaryToolbarButtonContainer">
             <button id="secondaryPresentationMode" class="secondaryToolbarButton presentationMode visibleLargeView" title="Switch to Presentation Mode" tabindex="51" data-l10n-id="presentation_mode">
               <span data-l10n-id="presentation_mode_label">Presentation Mode</span>
@@ -178,7 +246,7 @@ See https://github.com/adobe-type-tools/cmap-resources
           </div>
         </div>  <!-- secondaryToolbar -->
 
-        <div class="toolbar">
+        <div class="toolbar" style="display: none;">
           <div id="toolbarContainer">
             <div id="toolbarViewer">
               <div id="toolbarViewerLeft">
@@ -265,7 +333,7 @@ See https://github.com/adobe-type-tools/cmap-resources
           </div>
         </div>
 
-        <menu type="context" id="viewerContextMenu">
+        <menu type="context" id="viewerContextMenu" style="display: none;">
           <menuitem id="contextFirstPage" label="First Page"
                     data-l10n-id="first_page"></menuitem>
           <menuitem id="contextLastPage" label="Last Page"
@@ -300,7 +368,7 @@ See https://github.com/adobe-type-tools/cmap-resources
         </div>
       </div> <!-- mainContainer -->
 
-      <div id="overlayContainer" class="hidden">
+      <div id="overlayContainer" class="hidden" style="display: none;">
         <div id="passwordOverlay" class="container hidden">
           <div class="dialog">
             <div class="row">
@@ -361,7 +429,6 @@ See https://github.com/adobe-type-tools/cmap-resources
             </div>
           </div>
         </div>
-<!--#if !(FIREFOX || MOZCENTRAL)-->
         <div id="printServiceOverlay" class="container hidden">
           <div class="dialog">
             <div class="row">
@@ -376,13 +443,10 @@ See https://github.com/adobe-type-tools/cmap-resources
             </div>
           </div>
         </div>
-<!--#endif-->
-<!--#if CHROME-->
-<!--#include viewer-snippet-chrome-overlays.html-->
-<!--#endif-->
       </div>  <!-- overlayContainer -->
 
     </div> <!-- outerContainer -->
     <div id="printContainer"></div>
   </body>
 </html>
+

@@ -36,8 +36,11 @@ if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('CHROME')) {
 }
 
 var pdfjsWebApp;
+var domEvents;
+
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('PRODUCTION')) {
   pdfjsWebApp = require('./app.js');
+  domEvents = require('./dom_events.js');
 }
 
 if (typeof PDFJSDev !== 'undefined' && PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
@@ -168,25 +171,28 @@ function getViewerConfiguration() {
   };
 }
 
-function webViewerLoad() {
-  var config = getViewerConfiguration();
+function webViewerLoad(params) {
+  var eventBus = domEvents.getGlobalEventBus();
+  var config = Object.assign(getViewerConfiguration(), params, { eventBus: eventBus });
+
   if (typeof PDFJSDev === 'undefined' || !PDFJSDev.test('PRODUCTION')) {
     Promise.all([SystemJS.import('pdfjs-web/app'),
                  SystemJS.import('pdfjs-web/pdf_print_service')])
            .then(function (modules) {
       var app = modules[0];
+
       window.PDFViewerApplication = app.PDFViewerApplication;
       app.PDFViewerApplication.run(config);
+
+      return eventBus;
     });
   } else {
     window.PDFViewerApplication = pdfjsWebApp.PDFViewerApplication;
+
     pdfjsWebApp.PDFViewerApplication.run(config);
+
+    return eventBus;
   }
 }
 
-if (document.readyState === 'interactive' ||
-    document.readyState === 'complete') {
-  webViewerLoad();
-} else {
-  document.addEventListener('DOMContentLoaded', webViewerLoad, true);
-}
+window.webViewerLoad = webViewerLoad;
