@@ -150,6 +150,24 @@ See https://github.com/adobe-type-tools/cmap-resources
 
       window.addEventListener('message', receiveMessage, false);
 
+      var scrollDirection = 'down';
+      var viewContainerLastScrollTop = 0;
+
+      window.addEventListener('load', function () {
+        document.getElementById('viewerContainer').addEventListener('scroll', function (scrollEvent) {
+          var newScrollDirection = scrollEvent.target.scrollTop > viewContainerLastScrollTop
+            ? 'down'
+            : 'up';
+
+          if (scrollDirection != newScrollDirection || viewContainerLastScrollTop === 0) {
+            window.parent.postMessage({ type: 'DOCUMENT_SCROLL_CHANGED', direction: newScrollDirection }, origin);
+          }
+
+          scrollDirection = newScrollDirection;
+          viewContainerLastScrollTop = scrollEvent.target.scrollTop;
+        });
+      });
+
       document.addEventListener('click', function (event) {
         var isMaskClicked = function (node) {
           if (!node) {

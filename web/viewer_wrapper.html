@@ -120,6 +120,9 @@ See https://github.com/adobe-type-tools/cmap-resources
         if (event.data.type === 'DOCUMENT_PREVIEW_UNKNOWN_ERROR') {
           console.log('DOCUMENT_PREVIEW_UNKNOWN_ERROR');
         }
+        if (event.data.type === 'DOCUMENT_SCROLL_CHANGED') {
+          console.log(event.data);
+        }
       });
 
       viewer.contentWindow.addEventListener('load', function() {
