@@ -84,6 +84,9 @@ See https://github.com/adobe-type-tools/cmap-resources
             },
             onPrintProgress: function (progress) {
               window.parent.postMessage({ type: 'DOCUMENT_PRINT_PROGRESS', progress: progress }, origin);
+            },
+            onError: function (error) {
+              window.parent.postMessage({ type: error.type }, origin);
             }
           }
 
@@ -121,6 +124,24 @@ See https://github.com/adobe-type-tools/cmap-resources
       }
 
       window.addEventListener('message', receiveMessage, false);
+
+      document.addEventListener('click', function (event) {
+        var isMaskClicked = function (node) {
+          if (!node) {
+            return true;
+          }
+
+          if (node.className === 'page') {
+            return false;
+          }
+
+          return isMaskClicked(node.parentNode);
+        }
+
+        if (isMaskClicked(event.target)) {
+          window.parent.postMessage({ type: 'DOCUMENT_MASK_CLICKED' }, origin);
+        }
+      });
     </script>
     <style>
       body {

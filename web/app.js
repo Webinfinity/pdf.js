@@ -714,20 +714,28 @@ var PDFViewerApplication = {
       },
       function getDocumentError(exception) {
         var message = exception && exception.message;
-        var loadingErrorMessage = mozL10n.get('loading_error', null,
-          'An error occurred while loading the PDF.');
+        var loadingErrorMessage = mozL10n.get('loading_error', null, 'An error occurred while loading the PDF.');
 
-        if (exception instanceof pdfjsLib.InvalidPDFException) {
-          // change error message also for other builds
-          loadingErrorMessage = mozL10n.get('invalid_file_error', null,
-                                            'Invalid or corrupted PDF file.');
-        } else if (exception instanceof pdfjsLib.MissingPDFException) {
-          // special message for missing PDF's
-          loadingErrorMessage = mozL10n.get('missing_file_error', null,
-                                            'Missing PDF file.');
-        } else if (exception instanceof pdfjsLib.UnexpectedResponseException) {
-          loadingErrorMessage = mozL10n.get('unexpected_response_error', null,
-                                            'Unexpected server response.');
+        if (self.appConfig.onError) {
+          if (exception instanceof pdfjsLib.InvalidPDFException) {
+            loadingErrorMessage = mozL10n.get('invalid_file_error', null, 'Invalid or corrupted PDF file.');
+
+            self.appConfig.onError({
+              type: 'DOCUMENT_PREVIEW_CORRUPTED_FILE_ERROR'
+            });
+          } else if (exception instanceof pdfjsLib.MissingPDFException) {
+            loadingErrorMessage = mozL10n.get('missing_file_error', null, 'Missing PDF file.');
+
+            self.appConfig.onError({
+              type: 'DOCUMENT_PREVIEW_MISSING_PDF_FILE_ERROR'
+            });
+          } else {
+            loadingErrorMessage = mozL10n.get('unexpected_response_error', null, 'Unexpected server response.');
+
+            self.appConfig.onError({
+              type: 'DOCUMENT_PREVIEW_UNKNOWN_ERROR'
+            });
+          }
         }
 
         var moreInfo = {
@@ -829,40 +837,8 @@ var PDFViewerApplication = {
       }
     }
 
-    if (typeof PDFJSDev === 'undefined' ||
-        !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
-      var errorWrapperConfig = this.appConfig.errorWrapper;
-      var errorWrapper = errorWrapperConfig.container;
-      errorWrapper.removeAttribute('hidden');
-
-      var errorMessage = errorWrapperConfig.errorMessage;
-      errorMessage.textContent = message;
-
-      var closeButton = errorWrapperConfig.closeButton;
-      closeButton.onclick = function() {
-        errorWrapper.setAttribute('hidden', 'true');
-      };
-
-      var errorMoreInfo = errorWrapperConfig.errorMoreInfo;
-      var moreInfoButton = errorWrapperConfig.moreInfoButton;
-      var lessInfoButton = errorWrapperConfig.lessInfoButton;
-      moreInfoButton.onclick = function() {
-        errorMoreInfo.removeAttribute('hidden');
-        moreInfoButton.setAttribute('hidden', 'true');
-        lessInfoButton.removeAttribute('hidden');
-        errorMoreInfo.style.height = errorMoreInfo.scrollHeight + 'px';
-      };
-      lessInfoButton.onclick = function() {
-        errorMoreInfo.setAttribute('hidden', 'true');
-        moreInfoButton.removeAttribute('hidden');
-        lessInfoButton.setAttribute('hidden', 'true');
-      };
-      moreInfoButton.oncontextmenu = noContextMenuHandler;
-      lessInfoButton.oncontextmenu = noContextMenuHandler;
-      closeButton.oncontextmenu = noContextMenuHandler;
-      moreInfoButton.removeAttribute('hidden');
-      lessInfoButton.setAttribute('hidden', 'true');
-      errorMoreInfo.value = moreInfoText;
+    if (typeof PDFJSDev === 'undefined' || !PDFJSDev.test('FIREFOX || MOZCENTRAL')) {
+      console.error(message + '\n' + moreInfoText);
     } else {
       console.error(message + '\n' + moreInfoText);
       this.fallback();
