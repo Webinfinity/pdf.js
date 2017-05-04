@@ -67,6 +67,38 @@ See https://github.com/adobe-type-tools/cmap-resources
 <!--#include viewer-snippet-minified.html-->
 <!--#endif-->
     <script type="text/javascript">
+      function throttle(func, wait, options) {
+        var context, args, result;
+        var timeout = null;
+        var previous = 0;
+        if (!options) options = {};
+        var later = function () {
+          previous = options.leading === false ? 0 : Date.now();
+          timeout = null;
+          result = func.apply(context, args);
+          if (!timeout) context = args = null;
+        };
+        return function () {
+          var now = Date.now();
+          if (!previous && options.leading === false) previous = now;
+          var remaining = wait - (now - previous);
+          context = this;
+          args = arguments;
+          if (remaining <= 0 || remaining > wait) {
+            if (timeout) {
+              clearTimeout(timeout);
+              timeout = null;
+            }
+            previous = now;
+            result = func.apply(context, args);
+            if (!timeout) context = args = null;
+          } else if (!timeout && options.trailing !== false) {
+            timeout = setTimeout(later, remaining);
+          }
+          return result;
+        };
+      };
+
       if (typeof Object.assign != 'function') {
         Object.assign = function(target, varArgs) { // .length of function is 2
           'use strict';
@@ -150,22 +182,12 @@ See https://github.com/adobe-type-tools/cmap-resources
 
       window.addEventListener('message', receiveMessage, false);
 
-      var scrollDirection = 'down';
-      var viewContainerLastScrollTop = 0;
+      var postScrollEvent = throttle(function () {
+        window.parent.postMessage({ type: 'DOCUMENT_SCROLL' }, origin);
+      }, 500);
 
       window.addEventListener('load', function () {
-        document.getElementById('viewerContainer').addEventListener('scroll', function (scrollEvent) {
-          var newScrollDirection = scrollEvent.target.scrollTop > viewContainerLastScrollTop
-            ? 'down'
-            : 'up';
-
-          if (scrollDirection != newScrollDirection || viewContainerLastScrollTop === 0) {
-            window.parent.postMessage({ type: 'DOCUMENT_SCROLL_CHANGED', direction: newScrollDirection }, origin);
-          }
-
-          scrollDirection = newScrollDirection;
-          viewContainerLastScrollTop = scrollEvent.target.scrollTop;
-        });
+        document.getElementById('viewerContainer').addEventListener('scroll', postScrollEvent);
       });
 
       document.addEventListener('click', function (event) {
@@ -183,6 +205,8 @@ See https://github.com/adobe-type-tools/cmap-resources
 
         if (isMaskClicked(event.target)) {
           window.parent.postMessage({ type: 'DOCUMENT_MASK_CLICKED' }, origin);
+        } else {
+          window.parent.postMessage({ type: 'DOCUMENT_CLICKED' }, origin);
         }
       });
     </script>
