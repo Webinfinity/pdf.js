@@ -196,7 +196,7 @@ See https://github.com/adobe-type-tools/cmap-resources
             return true;
           }
 
-          if (node.className === 'page') {
+          if (node.className === 'page' || node.id === 'printCancel') {
             return false;
           }
 
