@@ -191,22 +191,31 @@ See https://github.com/adobe-type-tools/cmap-resources
       });
 
       document.addEventListener('click', function (event) {
-        var isMaskClicked = function (node) {
+        var getTarget = function (node) {
           if (!node) {
-            return true;
+            return 'mask';
           }
 
-          if (node.className === 'page' || node.id === 'printCancel') {
-            return false;
+          if (node.className === 'page') {
+            return 'page';
           }
 
-          return isMaskClicked(node.parentNode);
+          if (node.id === 'printCancel') {
+            return 'printCancel';
+          }
+
+          return getTarget(node.parentNode);
         }
 
-        if (isMaskClicked(event.target)) {
-          window.parent.postMessage({ type: 'DOCUMENT_MASK_CLICKED' }, origin);
-        } else {
-          window.parent.postMessage({ type: 'DOCUMENT_CLICKED' }, origin);
+        switch (getTarget(event.target)) {
+          case 'page':
+            window.parent.postMessage({ type: 'DOCUMENT_CLICKED' }, origin);
+            break;
+          case 'printCancel':
+            //Do nothing
+            break;
+          default:
+            window.parent.postMessage({ type: 'DOCUMENT_MASK_CLICKED' }, origin); 
         }
       });
     </script>
@@ -255,7 +264,7 @@ See https://github.com/adobe-type-tools/cmap-resources
       <div id="mainContainer">
         <div class="findbar hidden doorHanger" id="findbar" style="display: none;">
           <div id="findbarInputContainer">
-            <input id="findInput" class="toolbarField" title="Find" placeholder="Find in document…" tabindex="91" data-l10n-id="find_input">
+            <input id="findInput"  title="Find" placeholder="Find in document…" tabindex="91" data-l10n-id="find_input">
             <div class="splitToolbarButton">
               <button id="findPrevious" class="toolbarButton findPrevious" title="Find the previous occurrence of the phrase" tabindex="92" data-l10n-id="find_previous">
                 <span data-l10n-id="find_previous_label">Previous</span>
@@ -268,9 +277,9 @@ See https://github.com/adobe-type-tools/cmap-resources
           </div>
 
           <div id="findbarOptionsContainer">
-            <input type="checkbox" id="findHighlightAll" class="toolbarField" tabindex="94">
+            <input type="checkbox" id="findHighlightAll"  tabindex="94">
             <label for="findHighlightAll" class="toolbarLabel" data-l10n-id="find_highlight">Highlight all</label>
-            <input type="checkbox" id="findMatchCase" class="toolbarField" tabindex="95">
+            <input type="checkbox" id="findMatchCase"  tabindex="95">
             <label for="findMatchCase" class="toolbarLabel" data-l10n-id="find_match_case_label">Match case</label>
             <span id="findResultsCount" class="toolbarLabel hidden"></span>
           </div>
@@ -341,7 +350,6 @@ See https://github.com/adobe-type-tools/cmap-resources
                 <button id="sidebarToggle" class="toolbarButton" title="Toggle Sidebar" tabindex="11" data-l10n-id="toggle_sidebar">
                   <span data-l10n-id="toggle_sidebar_label">Toggle Sidebar</span>
                 </button>
-                <div class="toolbarButtonSpacer"></div>
                 <button id="viewFind" class="toolbarButton" title="Find in Document" tabindex="12" data-l10n-id="findbar">
                   <span data-l10n-id="findbar_label">Find</span>
                 </button>
@@ -464,7 +472,7 @@ See https://github.com/adobe-type-tools/cmap-resources
             </div>
             <div class="row">
               <!-- The type="password" attribute is set via script, to prevent warnings in Firefox for all http:// documents. -->
-              <input id="password" class="toolbarField">
+              <input id="password" >
             </div>
             <div class="buttonRow">
               <button id="passwordCancel" class="overlayButton"><span data-l10n-id="password_cancel">Cancel</span></button>
