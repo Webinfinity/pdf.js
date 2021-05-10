@@ -61,7 +61,8 @@ function PDFPrintService(
   printContainer,
   printResolution,
   optionalContentConfigPromise = null,
-  l10n
+  l10n,
+  appConfig
 ) {
   this.pdfDocument = pdfDocument;
   this.pagesOverview = pagesOverview;
@@ -70,6 +71,7 @@ function PDFPrintService(
   this._optionalContentConfigPromise =
     optionalContentConfigPromise || pdfDocument.getOptionalContentConfig();
   this.l10n = l10n;
+  this.appConfig = appConfig;
   this.currentPage = -1;
   // The temporary canvas where renderPage paints one page at a time.
   this.scratchCanvas = document.createElement("canvas");
@@ -144,11 +146,21 @@ PDFPrintService.prototype = {
       this.throwIfInactive();
       if (++this.currentPage >= pageCount) {
         renderProgress(pageCount, pageCount, this.l10n);
+
+        if (this.appConfig.onPrintProgress) {
+          this.appConfig.onPrintProgress(100);
+        }
+
         resolve();
         return;
       }
       const index = this.currentPage;
       renderProgress(index, pageCount, this.l10n);
+
+      if (this.appConfig.onPrintProgress) {
+        this.appConfig.onPrintProgress(Math.round(index / pageCount * 100));
+      }
+
       renderPage(
         this,
         this.pdfDocument,
@@ -355,7 +367,8 @@ PDFPrintServiceFactory.instance = {
     printContainer,
     printResolution,
     optionalContentConfigPromise,
-    l10n
+    l10n,
+    appConfig
   ) {
     if (activeService) {
       throw new Error("The print service is created and active.");
@@ -366,7 +379,8 @@ PDFPrintServiceFactory.instance = {
       printContainer,
       printResolution,
       optionalContentConfigPromise,
-      l10n
+      l10n,
+      appConfig
     );
     return activeService;
   },

@@ -13,19 +13,19 @@
  * limitations under the License.
  */
 
-import "../external/webL10n/l10n.js";
-import { getL10nFallback } from "./l10n_utils.js";
+//import "../external/webL10n/l10n.js";
+import { getL10nFallback, NullL10n } from "./l10n_utils.js";
 
-const webL10n = document.webL10n;
+//const webL10n = document.webL10n;
 
 class GenericL10n {
   constructor(lang) {
     this._lang = lang;
-    this._ready = new Promise((resolve, reject) => {
+    this._ready = Promise.resolve(NullL10n); /*new Promise((resolve, reject) => {
       webL10n.setLanguage(lang, () => {
         resolve(webL10n);
       });
-    });
+    });*/
   }
 
   async getLanguage() {

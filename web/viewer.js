@@ -196,14 +196,15 @@ function getViewerConfiguration() {
   };
 }
 
-function webViewerLoad() {
-  const config = getViewerConfiguration();
+function webViewerLoad(params) {
+  const config = Object.assign(getViewerConfiguration(), params);
+
   if (typeof PDFJSDev === "undefined" || !PDFJSDev.test("PRODUCTION")) {
-    Promise.all([
+    return Promise.all([
       import("pdfjs-web/genericcom.js"),
       import("pdfjs-web/pdf_print_service.js"),
     ]).then(function ([genericCom, pdfPrintService]) {
-      PDFViewerApplication.run(config);
+      return PDFViewerApplication.run(config);
     });
   } else {
     if (typeof PDFJSDev !== "undefined" && PDFJSDev.test("CHROME")) {
@@ -231,7 +232,7 @@ function webViewerLoad() {
       }
     }
 
-    PDFViewerApplication.run(config);
+    return PDFViewerApplication.run(config);
   }
 }
 
@@ -241,13 +242,15 @@ if (document.blockUnblockOnload) {
   document.blockUnblockOnload(true);
 }
 
-if (
+window.webViewerLoad = webViewerLoad;
+
+/*if (
   document.readyState === "interactive" ||
   document.readyState === "complete"
 ) {
   webViewerLoad();
 } else {
   document.addEventListener("DOMContentLoaded", webViewerLoad, true);
-}
+}*/
 
 export { PDFViewerApplication, AppOptions as PDFViewerApplicationOptions };
