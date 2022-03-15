@@ -239,6 +239,7 @@ const PDFViewerApplication = {
   secondaryToolbar: null,
   /** @type {EventBus} */
   eventBus: null,
+  onProgress: null,
   /** @type {IL10n} */
   l10n: null,
   isInitialViewSet: false,
@@ -622,7 +623,7 @@ const PDFViewerApplication = {
   },
 
   run(config) {
-    this.initialize(config).then(webViewerInitialized);
+    return this.initialize(config).then(webViewerInitialized);
   },
 
   get initialized() {
@@ -945,7 +946,7 @@ const PDFViewerApplication = {
           key = "unexpected_response_error";
         }
         return this.l10n.get(key).then(msg => {
-          this._documentError(msg, { message: reason?.message });
+          this._documentError(msg, { key, message: reason?.message });
           throw reason;
         });
       }
@@ -1071,6 +1072,7 @@ const PDFViewerApplication = {
         build: build || "?",
       }),
     ];
+
     if (moreInfo) {
       moreInfoText.push(
         this.l10n.get("error_message", { message: moreInfo.message })
@@ -1091,7 +1093,30 @@ const PDFViewerApplication = {
           );
         }
       }
+
+      let type = null;
+
+      switch (moreInfo.key) {
+        case "invalid_file_error":
+          type = "DOCUMENT_PREVIEW_CORRUPTED_FILE_ERROR";
+          break;
+        case "missing_file_error":
+          type = "DOCUMENT_PREVIEW_MISSING_PDF_FILE_ERROR";
+          break;
+        default:
+          type = "DOCUMENT_PREVIEW_UNKNOWN_ERROR";
+      }
+
+      this.appConfig && this.appConfig.onError({
+        type
+      });
     }
+
+    Promise.all(moreInfoText).then(parts => {
+      console.error(message + '\n' + parts.join("\n"));
+    });
+
+    return;
 
     if (typeof PDFJSDev === "undefined" || !PDFJSDev.test("MOZCENTRAL")) {
       const errorWrapperConfig = this.appConfig.errorWrapper;
@@ -1149,6 +1174,10 @@ const PDFViewerApplication = {
     // increases.
     if (percent > this.loadingBar.percent || isNaN(percent)) {
       this.loadingBar.percent = percent;
+
+      if (this.appConfig.onProgress) {
+        this.appConfig.onProgress(percent);
+      }
 
       // When disableAutoFetch is enabled, it's not uncommon for the entire file
       // to never be fetched (depends on e.g. the file structure). In this case
@@ -1827,7 +1856,8 @@ const PDFViewerApplication = {
       printContainer,
       printResolution,
       optionalContentConfigPromise,
-      this.l10n
+      this.l10n,
+      this.appConfig
     );
     this.printService = printService;
     this.forceRendering();
@@ -1840,6 +1870,8 @@ const PDFViewerApplication = {
   },
 
   afterPrint() {
+    this.appConfig.onPrintFinished();
+
     // Given that the "afterprint" browser event is synchronous, we
     // unfortunately cannot await the scripting event dispatching here.
     this.pdfScriptingManager.dispatchDidPrint();
