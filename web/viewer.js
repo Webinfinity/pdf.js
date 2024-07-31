@@ -179,8 +179,8 @@ function getViewerConfiguration() {
   };
 }
 
-function webViewerLoad() {
-  const config = getViewerConfiguration();
+var webViewerLoad = function(params) {
+  const config = Object.assign(getViewerConfiguration(), params);
 
   if (typeof PDFJSDev !== "undefined" && PDFJSDev.test("GENERIC")) {
     // Give custom implementations of the default viewer a simpler way to
@@ -205,24 +205,16 @@ function webViewerLoad() {
       document.dispatchEvent(event);
     }
   }
-  PDFViewerApplication.run(config);
+  return PDFViewerApplication.run(config);
 }
 
 // Block the "load" event until all pages are loaded, to ensure that printing
 // works in Firefox; see https://bugzilla.mozilla.org/show_bug.cgi?id=1618553
 document.blockUnblockOnload?.(true);
 
-if (
-  document.readyState === "interactive" ||
-  document.readyState === "complete"
-) {
-  webViewerLoad();
-} else {
-  document.addEventListener("DOMContentLoaded", webViewerLoad, true);
-}
-
 export {
   PDFViewerApplication,
   AppConstants as PDFViewerApplicationConstants,
   AppOptions as PDFViewerApplicationOptions,
+  webViewerLoad as WebViewerLoad,
 };

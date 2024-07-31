@@ -146,6 +146,7 @@ const PDFViewerApplication = {
   secondaryToolbar: null,
   /** @type {EventBus} */
   eventBus: null,
+  onProgress: null,
   /** @type {IL10n} */
   l10n: null,
   /** @type {AnnotationEditorParams} */
@@ -1165,6 +1166,23 @@ const PDFViewerApplication = {
       }
     }
 
+    if (this.appConfig) {
+      let type = null;
+
+      switch (moreInfo.key) {
+        case "pdfjs-invalid-file-error":
+          type = "DOCUMENT_PREVIEW_CORRUPTED_FILE_ERROR";
+          break;
+        case "pdfjs-missing-file-error":
+          type = "DOCUMENT_PREVIEW_MISSING_PDF_FILE_ERROR";
+          break;
+        default:
+          type = "DOCUMENT_PREVIEW_UNKNOWN_ERROR";
+      }
+
+      this.appConfig.onError({ type });
+    }
+
     console.error(`${message}\n\n${moreInfoText.join("\n")}`);
     return message;
   },
@@ -1179,6 +1197,10 @@ const PDFViewerApplication = {
       return;
     }
     this.loadingBar.percent = percent;
+
+    if (this.appConfig.onProgress) {
+      this.appConfig.onProgress(percent);
+    }
 
     // When disableAutoFetch is enabled, it's not uncommon for the entire file
     // to never be fetched (depends on e.g. the file structure). In this case
@@ -1786,6 +1808,7 @@ const PDFViewerApplication = {
       printContainer: this.appConfig.printContainer,
       printResolution: AppOptions.get("printResolution"),
       printAnnotationStoragePromise: this._printAnnotationStoragePromise,
+      appConfig: this.appConfig,
     });
     this.forceRendering();
     // Disable the editor-indicator during printing (fixes bug 1790552).
@@ -1805,6 +1828,8 @@ const PDFViewerApplication = {
   },
 
   afterPrint() {
+    this.appConfig.onPrintFinished();
+    
     if (this._printAnnotationStoragePromise) {
       this._printAnnotationStoragePromise.then(() => {
         this.pdfScriptingManager.dispatchDidPrint();
