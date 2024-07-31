@@ -205,7 +205,150 @@ function webViewerLoad() {
       document.dispatchEvent(event);
     }
   }
-  PDFViewerApplication.run(config);
+  PDFViewerApplication.run(config).then(() => {
+    setUpParentIframeEventListeners();
+  });
+}
+
+function throttle(func, wait, options) {
+  var context, args, result;
+  var timeout = null;
+  var previous = 0;
+  if (!options) options = {};
+  var later = function () {
+    previous = options.leading === false ? 0 : Date.now();
+    timeout = null;
+    result = func.apply(context, args);
+    if (!timeout) context = args = null;
+  };
+  return function () {
+    var now = Date.now();
+    if (!previous && options.leading === false) previous = now;
+    var remaining = wait - (now - previous);
+    context = this;
+    args = arguments;
+    if (remaining <= 0 || remaining > wait) {
+      if (timeout) {
+        clearTimeout(timeout);
+        timeout = null;
+      }
+      previous = now;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
+    } else if (!timeout && options.trailing !== false) {
+      timeout = setTimeout(later, remaining);
+    }
+    return result;
+  };
+}
+
+function setUpParentIframeEventListeners() {
+  const origin = getOrigin();
+
+  window.addEventListener('message', receiveParentIframeMessage, false);
+
+  window.PDFViewerApplication.eventBus._on("em360-document-progress", event => {
+    window.parent.postMessage({ type: 'DOCUMENT_PROGRESS', progress: event.percent }, origin);
+  });
+
+  window.PDFViewerApplication.eventBus._on("em360-print-finished", event => {
+    window.parent.postMessage({ type: 'DOCUMENT_PRINT_FINISHED' }, origin);
+  });
+
+  window.PDFViewerApplication.eventBus._on("em360-print-progress", event => {
+    window.parent.postMessage({ type: 'DOCUMENT_PRINT_PROGRESS', progress: event.percent }, origin);
+  });
+  
+  window.PDFViewerApplication.eventBus._on("documenterror", event => {
+    let type = '';
+
+    switch (event.key) {
+      case "pdfjs-invalid-file-error":
+        type = "DOCUMENT_PREVIEW_CORRUPTED_FILE_ERROR";
+        break;
+      case "pdfjs-missing-file-error":
+        type = "DOCUMENT_PREVIEW_MISSING_PDF_FILE_ERROR";
+        break;
+      case "pdfjs-loading-error":
+      case "pdfjs-unexpected-response-error":
+      case "pdfjs-rendering-error":
+        type = "DOCUMENT_PREVIEW_UNKNOWN_ERROR"
+        break;
+    }
+
+    window.parent.postMessage({ type }, origin);
+  });
+
+  const postScrollEvent = throttle(function () {
+    window.parent.postMessage({ type: 'DOCUMENT_SCROLL' }, origin);
+  }, 500);
+
+  window.addEventListener('load', function () {
+    document.getElementById('viewerContainer')
+      .addEventListener('scroll', postScrollEvent);
+  });
+
+  document.addEventListener('click', function (event) {
+    const getTarget = function (node) {
+      if (!node) {
+        return 'mask';
+      }
+
+      if (node.className === 'page') {
+        return 'page';
+      }
+
+      if (node.id === 'printCancel') {
+        return 'printCancel';
+      }
+
+      return getTarget(node.parentNode);
+    }
+
+    switch (getTarget(event.target)) {
+      case 'page':
+        window.parent.postMessage({ type: 'DOCUMENT_CLICKED' }, origin);
+        break;
+      case 'printCancel':
+        //Do nothing
+        break;
+      default:
+        window.parent.postMessage({ type: 'DOCUMENT_MASK_CLICKED' }, origin); 
+    }
+  });
+}
+
+function getOrigin() {
+  if (window.location.origin) {
+    return window.location.origin;
+  }
+
+  const port = window.location.port ? ':' + window.location.port : '';
+  return `${window.location.protocol}//${window.location.hostname}${port}`;
+}
+
+function receiveParentIframeMessage(event) {
+  if (event.data.type === 'DOCUMENT_PRINT') {
+    window.PDFViewerApplication.eventBus.dispatch('print');
+  }
+
+  if (event.data.type === 'DOCUMENT_ZOOMIN') {
+    window.PDFViewerApplication.eventBus.dispatch('zoomin');
+  }
+
+  if (event.data.type === 'DOCUMENT_ZOOMOUT') {
+    window.PDFViewerApplication.eventBus.dispatch('zoomout');
+  }
+
+  if (event.data.type === 'DOCUMENT_SCALE_CHANGED') {
+    window.PDFViewerApplication.eventBus.dispatch('scalechanged', {
+      value: event.data.scale
+    });
+  }
+
+  if (event.data.type === 'DOCUMENT_PRINT_CANCEL') {
+    document.getElementById('printCancel').click();
+  }
 }
 
 // Block the "load" event until all pages are loaded, to ensure that printing
