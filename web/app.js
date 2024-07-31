@@ -1133,6 +1133,7 @@ const PDFViewerApplication = {
 
     this.eventBus.dispatch("documenterror", {
       source: this,
+      key: key || "pdfjs-loading-error",
       message,
       reason: moreInfo?.message ?? null,
     });
@@ -1178,6 +1179,10 @@ const PDFViewerApplication = {
     if (!this.loadingBar || percent <= this.loadingBar.percent) {
       return;
     }
+
+    this.eventBus.dispatch("em360-document-progress", {
+      percent: percent
+    });
     this.loadingBar.percent = percent;
 
     // When disableAutoFetch is enabled, it's not uncommon for the entire file
@@ -1786,6 +1791,7 @@ const PDFViewerApplication = {
       printContainer: this.appConfig.printContainer,
       printResolution: AppOptions.get("printResolution"),
       printAnnotationStoragePromise: this._printAnnotationStoragePromise,
+      eventBus: this.eventBus
     });
     this.forceRendering();
     // Disable the editor-indicator during printing (fixes bug 1790552).
@@ -1813,6 +1819,8 @@ const PDFViewerApplication = {
     }
 
     if (this.printService) {
+      this.eventBus.dispatch("em360-print-finished");
+
       this.printService.destroy();
       this.printService = null;
 

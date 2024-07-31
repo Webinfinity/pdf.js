@@ -42,6 +42,23 @@ See https://github.com/adobe-type-tools/cmap-resources
 <!--<link rel="localization" href="toolkit/pdfviewer/viewer.ftl"/>-->
 <!--#else-->
     <link rel="stylesheet" href="viewer.css">
+    <style>
+      body {
+        background: transparent;
+      }
+
+      #viewerContainer {
+        top: 0 !important;
+      }
+
+      #mainContainer {
+        left: 0px !important;
+      }
+
+      #toolbarContainer {
+        display: none !important;
+      }
+    </style>
 <!--#endif-->
 
 <!--#if MOZCENTRAL-->

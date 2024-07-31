@@ -84,6 +84,7 @@ class PDFPrintService {
     printContainer,
     printResolution,
     printAnnotationStoragePromise = null,
+    eventBus
   }) {
     this.pdfDocument = pdfDocument;
     this.pagesOverview = pagesOverview;
@@ -92,6 +93,7 @@ class PDFPrintService {
     this._optionalContentConfigPromise = pdfDocument.getOptionalContentConfig({
       intent: "print",
     });
+    this.eventBus = eventBus;
     this._printAnnotationStoragePromise =
       printAnnotationStoragePromise || Promise.resolve();
     this.currentPage = -1;
@@ -165,11 +167,21 @@ class PDFPrintService {
       this.throwIfInactive();
       if (++this.currentPage >= pageCount) {
         renderProgress(pageCount, pageCount);
+
+        this.eventBus.dispatch("em360-print-progress", {
+          percent: 100
+        });
+
         resolve();
         return;
       }
       const index = this.currentPage;
-      renderProgress(index, pageCount);
+      renderProgress(index, pageCount); 
+
+      this.eventBus.dispatch("em360-print-progress", {
+        percent: Math.round(index / pageCount * 100)
+      });
+
       renderPage(
         this,
         this.pdfDocument,
