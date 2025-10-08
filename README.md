@@ -44,6 +44,10 @@ Replace the `pdfjs.config` file with the version from the Mozilla release:
 
 ## 5. Push and merge the new branch into master branch
 
+To push use: git push -u origin {new_branch_name}
+(e.g. git push -u origin feature/alex/EM360-5636-pdfjs-5.4.296)
+
+Create a pull request into https://github.com/Webinfinity/pdf.js (master branch)
 ## 6. Create a DevOps Ticket
 
 Submit an SRE ticket requesting deployment of the updated library to S3:
