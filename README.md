@@ -17,7 +17,7 @@ Get the latest release from the official Mozilla PDF.js repository:
 ## 2. Update the `dist` Folder
 
 Create a branch from the latest master
-Branch naming feature/{author}{JIRA_TICKET_ID}-pdfjs-{pdfjs_version} (e.g. feature/alex/EM360-4607-pdfjs-5.3.93)
+Branch naming feature/{author}/{JIRA_TICKET_ID}-pdfjs-{pdfjs_version} (e.g. feature/alex/EM360-4607-pdfjs-5.3.93)
 
 Replace the contents of the `dist` folder with the latest library files:
 
