@@ -1225,12 +1225,12 @@ class PDFLinkService {
   getDestinationHash(dest) {
     if (typeof dest === "string") {
       if (dest.length > 0) {
-        return this.getAnchorUrl("#" + escape(dest));
+        return this.getAnchorUrl("#" + encodeURIComponent(dest));
       }
     } else if (Array.isArray(dest)) {
       const str = JSON.stringify(dest);
       if (str.length > 0) {
-        return this.getAnchorUrl("#" + escape(str));
+        return this.getAnchorUrl("#" + encodeURIComponent(str));
       }
     }
     return this.getAnchorUrl("");
@@ -1304,7 +1304,7 @@ class PDFLinkService {
       }
       return;
     }
-    dest = unescape(hash);
+    dest = decodeURIComponent(hash);
     try {
       dest = JSON.parse(dest);
       if (!Array.isArray(dest)) {
@@ -1315,7 +1315,7 @@ class PDFLinkService {
       this.goToDestination(dest);
       return;
     }
-    console.error(`PDFLinkService.setHash: "${unescape(hash)}" is not a valid destination.`);
+    console.error(`PDFLinkService.setHash: "${decodeURIComponent(hash)}" is not a valid destination.`);
   }
   executeNamedAction(action) {
     if (!this.pdfDocument) {
@@ -5497,7 +5497,7 @@ class DownloadManager {
       let viewerUrl;
       viewerUrl = "?file=" + encodeURIComponent(blobUrl + "#" + filename);
       if (dest) {
-        viewerUrl += `#${escape(dest)}`;
+        viewerUrl += `#${encodeURIComponent(dest)}`;
       }
       try {
         window.open(viewerUrl);
@@ -7652,7 +7652,7 @@ class PDFHistory {
     this._numPositionUpdates = 0;
   }
   #parseCurrentHash(checkNameddest = false) {
-    const hash = unescape(getCurrentHash()).substring(1);
+    const hash = decodeURIComponent(getCurrentHash()).substring(1);
     const params = parseQueryString(hash);
     const nameddest = params.get("nameddest") || "";
     let page = params.get("page") | 0;
