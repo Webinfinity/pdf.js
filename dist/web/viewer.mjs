@@ -5497,7 +5497,7 @@ class DownloadManager {
       let viewerUrl;
       viewerUrl = "?file=" + encodeURIComponent(blobUrl + "#" + filename);
       if (dest) {
-        viewerUrl += `#${encodeURIComponent(dest)}`;//test to trigger CodeQL
+        viewerUrl += `#${encodeURIComponent(dest)}`;
       }
       try {
         window.open(viewerUrl);
