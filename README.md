@@ -7,45 +7,84 @@ This repository:
 
 # How to Update the PDF.js Library
 
-## 1. Download the Latest Release
+## Automated Update (Recommended)
+
+Use the automated script to update PDF.js. This script handles all steps automatically:
+
+```bash
+# On Windows, Mac, or Linux
+node scripts/update-pdfjs-version.js -n <name> -t <ticket_id> -v <version>
+
+# Example:
+node scripts/update-pdfjs-version.js -n andrei -t em360-6878 -v 4.0.0
+```
+
+**Parameters:**
+- `-n, --name`: Your name (used in branch name)
+- `-t, --ticket`: Ticket ID in format `em360-{numeric-id}`
+- `-v, --version`: PDF.js version (e.g., `4.0.0`)
+
+**What the script does:**
+1. Pulls latest changes from master
+2. Creates a feature branch: `feature/{name}/{ticket_id}-pdfjs-{version}`
+3. Downloads the PDF.js release from GitHub
+4. Updates the `dist` folder
+5. Updates `package.json`, `package-lock.json`, and `pdfjs.config`
+6. Creates a commit and pushes to origin
+
+## Manual Update
+
+If you prefer to update manually, follow these steps:
+
+### 1. Download the Latest Release
 
 Get the latest release from the official Mozilla PDF.js repository:
 
 - Go to [https://github.com/mozilla/pdf.js/releases](https://github.com/mozilla/pdf.js/releases)
 - Download the archive: `http://pdfjs-{latest-version}-dist.zip`
 
-## 2. Update the `dist` Folder
+### 2. Create a Feature Branch
 
-Create a branch from the latest master
-Branch naming feature/{author}/{JIRA_TICKET_ID}-pdfjs-{pdfjs_version} (e.g. feature/alex/EM360-4607-pdfjs-5.3.93)
+Create a branch from the latest master with the naming format:
+```
+feature/{author}/{JIRA_TICKET_ID}-pdfjs-{pdfjs_version}
+```
+
+Example: `feature/alex/EM360-4607-pdfjs-5.3.93`
+
+### 3. Update the `dist` Folder
 
 Replace the contents of the `dist` folder with the latest library files:
 
 - Repository: [Webinfinity/pdf.js – dist folder](https://github.com/Webinfinity/pdf.js/tree/master/dist)
 
-## 3. Update `package.json` Files
+### 4. Update Metadata Files
 
 Replace the following files in the Webinfinity repo with those from the corresponding Mozilla release:
 
 - [`package.json`](https://github.com/Webinfinity/pdf.js/blob/master/package.json)
 - [`package-lock.json`](https://github.com/Webinfinity/pdf.js/blob/master/package-lock.json)
+- [`pdfjs.config`](https://github.com/Webinfinity/pdf.js/blob/master/pdfjs.config)
 
-https://github.com/mozilla/pdf.js/blob/{pdfjs_version}/package.json 
-https://github.com/mozilla/pdf.js/blob/{pdfjs_version}/package-lock.json
-(e.g https://github.com/mozilla/pdf.js/blob/v5.4.296/package.json and https://github.com/mozilla/pdf.js/blob/v5.4.296/package-lock.json)
+Mozilla source URLs:
+- `https://github.com/mozilla/pdf.js/blob/v{version}/package.json`
+- `https://github.com/mozilla/pdf.js/blob/v{version}/package-lock.json`
+- `https://github.com/mozilla/pdf.js/blob/v{version}/pdfjs.config`
 
-Use the versions from the corresponding Mozilla PDF.js release.
+### 5. Commit and Push
 
-## 4. Update `pdfjs.config`
+```bash
+git add --all
+git commit -m "em360-{TICKET_ID} pdf.js upgraded to v{version}"
+git push -u origin feature/{author}/{TICKET_ID}-pdfjs-{version}
+```
 
-Replace the `pdfjs.config` file with the version from the Mozilla release:
+Example:
+```bash
+git push -u origin feature/alex/EM360-5636-pdfjs-5.4.296
+```
 
-- [`pdfjs.config`](https://github.com/mozilla/pdf.js/blob/master/pdfjs.config)
-
-## 5. Push and merge the new branch into master branch
-
-To push use: git push -u origin {new_branch_name}
-(e.g. git push -u origin feature/alex/EM360-5636-pdfjs-5.4.296)
+### 6. Create a Pull Request
 
 Create a pull request into https://github.com/Webinfinity/pdf.js (master branch)
 ## 6. Create a DevOps Ticket
