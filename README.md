@@ -117,3 +117,42 @@ to reflect the new version.
 - Run the app locally
 - Thoroughly test the updated viewer
 - Fix any new issues that arise
+
+## 9. Deploy to S3 Using AWS CLI
+
+Use the AWS CLI to upload the dist folder to your environment. Path structure: `/pdfjs/{version}/{content of the dist folder}`
+
+Replace `{YOUR_PROFILE_NAME}` with your AWS profile name and `{version}` with the PDF.js version (e.g., `6.1.200`).
+
+**Note:** Commands may vary depending on your AWS login setup and profile configuration.
+
+### Copy Commands
+
+Use for **new version deployments** or when you want to preserve existing S3 files:
+
+```bash
+aws s3 cp dist s3://wi-content-dev/pdfjs/{version}/ --recursive --profile YOUR_PROFILE_NAME
+aws s3 cp dist s3://wi-content-f1/pdfjs/{version}/ --recursive --profile YOUR_PROFILE_NAME
+aws s3 cp dist s3://wi-content-qa/pdfjs/{version}/ --recursive --profile YOUR_PROFILE_NAME
+aws s3 cp dist s3://wi-content-prelive/pdfjs/{version}/ --recursive --profile YOUR_PROFILE_NAME
+aws s3 cp dist s3://wi-content-sandbox/pdfjs/{version}/ --recursive --profile YOUR_PROFILE_NAME
+```
+
+### Sync Commands
+
+Use to **update an existing version** and remove deleted/obsolete files:
+
+```bash
+aws s3 sync dist s3://wi-content-dev/pdfjs/{version}/ --delete --profile YOUR_PROFILE_NAME
+aws s3 sync dist s3://wi-content-f1/pdfjs/{version}/ --delete --profile YOUR_PROFILE_NAME
+aws s3 sync dist s3://wi-content-qa/pdfjs/{version}/ --delete --profile YOUR_PROFILE_NAME
+aws s3 sync dist s3://wi-content-prelive/pdfjs/{version}/ --delete --profile YOUR_PROFILE_NAME
+aws s3 sync dist s3://wi-content-sandbox/pdfjs/{version}/ --delete --profile YOUR_PROFILE_NAME
+```
+
+### Utility Commands
+
+```bash
+aws s3 ls s3://wi-content-dev/pdfjs/ --profile YOUR_PROFILE_NAME
+aws s3 ls s3://wi-content-dev/pdfjs/{version}/ --recursive --profile YOUR_PROFILE_NAME
+```
